@@ -66,7 +66,8 @@ export default function RunnerGame() {
 
     // Assets
     const thiefImg = useRef<HTMLImageElement | null>(null);
-    const officerImg = useRef<HTMLImageElement | null>(null);
+    const officer1Img = useRef<HTMLImageElement | null>(null);
+    const officer2Img = useRef<HTMLImageElement | null>(null);
     const bgMusic = useRef<HTMLAudioElement | null>(null);
 
     // Load Assets
@@ -75,14 +76,28 @@ export default function RunnerGame() {
         tImg.src = '/thief.png';
         tImg.onload = () => thiefImg.current = tImg;
 
-        const oImg = new Image();
-        oImg.src = '/officer.png';
-        oImg.onload = () => officerImg.current = oImg;
+        const o1Img = new Image();
+        o1Img.src = '/police1.png';
+        o1Img.onload = () => officer1Img.current = o1Img;
 
-        const audio = new Audio('/bg-music.mp3');
+        const o2Img = new Image();
+        o2Img.src = '/police2.png';
+        o2Img.onload = () => officer2Img.current = o2Img;
+
+        const audio = new Audio('/pakad-mc.mp3');
         audio.loop = true;
         bgMusic.current = audio;
     }, []);
+
+    // ... (Resize handler remains same) ...
+
+    // ... (Game Logic remains same) ...
+
+    // ... (Input Listeners remain same) ...
+
+    // ... (Game Loop update function) ...
+
+
 
     // Resize & Orientation Handler
     useEffect(() => {
@@ -242,13 +257,20 @@ export default function RunnerGame() {
         }
 
         // Draw Officers
-        if (officerImg.current) {
-            // Draw two officers slightly offset
-            ctx.drawImage(officerImg.current, officers.current.x, officers.current.y, 40, 60);
-            ctx.drawImage(officerImg.current, officers.current.x + 20, officers.current.y, 40, 60);
+        // Draw Officers
+        // Draw two officers slightly offset
+        if (officer1Img.current) {
+            ctx.drawImage(officer1Img.current, officers.current.x, officers.current.y, 40, 60);
         } else {
             ctx.fillStyle = officers.current.color;
-            ctx.fillRect(officers.current.x, officers.current.y, officers.current.width, officers.current.height);
+            ctx.fillRect(officers.current.x, officers.current.y, 40, 60);
+        }
+
+        if (officer2Img.current) {
+            ctx.drawImage(officer2Img.current, officers.current.x + 30, officers.current.y + 5, 40, 60);
+        } else {
+            ctx.fillStyle = officers.current.color;
+            ctx.fillRect(officers.current.x + 30, officers.current.y + 5, 40, 60);
         }
 
         // --- UPDATE THIEF (AI) ---
