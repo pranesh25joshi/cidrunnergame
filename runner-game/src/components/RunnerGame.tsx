@@ -115,7 +115,7 @@ export default function RunnerGame() {
     }, []);
 
     // Toggle Mute
-    const toggleMute = (e: React.MouseEvent | React.TouchEvent) => {
+    const toggleMute = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent jump
         if (bgMusic.current) {
             bgMusic.current.muted = !bgMusic.current.muted;
@@ -151,17 +151,18 @@ export default function RunnerGame() {
         }
 
         if (bgMusic.current) {
-            bgMusic.current.currentTime = 0;
-            bgMusic.current.muted = isMuted;
-            const playPromise = bgMusic.current.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(e => {
-                    console.log("Audio play failed (Autoplay policy)", e);
-                    // If failed, we might be muted or need interaction. 
-                    // We can show a "Unmute" button or just keep it muted.
-                    setIsMuted(true);
-                    if (bgMusic.current) bgMusic.current.muted = true;
-                });
+            // Only restart music if it's not already playing or if we are restarting from a non-playing state
+            if (bgMusic.current.paused) {
+                bgMusic.current.currentTime = 0;
+                bgMusic.current.muted = isMuted;
+                const playPromise = bgMusic.current.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.log("Audio play failed (Autoplay policy)", e);
+                        setIsMuted(true);
+                        if (bgMusic.current) bgMusic.current.muted = true;
+                    });
+                }
             }
         }
     };
@@ -396,7 +397,7 @@ export default function RunnerGame() {
             )}
 
             {/* HUD */}
-            <div className="absolute top-6 left-6 right-6 flex justify-between items-start pointer-events-none">
+            <div className="absolute top-8 left-8 right-8 flex justify-between items-start pointer-events-none" style={{ paddingTop: 'env(safe-area-inset-top)', paddingRight: 'env(safe-area-inset-right)', paddingLeft: 'env(safe-area-inset-left)' }}>
                 {/* Distance */}
                 <div className="glass-panel px-6 py-2 rounded-full flex items-center gap-3 animate-fade-in pointer-events-auto">
                     <span className="text-xs text-blue-200 uppercase font-bold tracking-wider">Target</span>
@@ -408,7 +409,6 @@ export default function RunnerGame() {
                 {/* Mute Button */}
                 <button
                     onClick={toggleMute}
-                    onTouchStart={toggleMute}
                     className="glass-panel p-3 rounded-full text-white hover:bg-white/10 active:scale-95 transition-all pointer-events-auto z-50"
                 >
                     {isMuted ? (
