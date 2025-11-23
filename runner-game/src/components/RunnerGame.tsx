@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 // Game Constants
 const GRAVITY = 0.6;
 const JUMP_FORCE = -12;
-const GROUND_HEIGHT = 50;
+const GROUND_HEIGHT = 80;
 const OBSTACLE_SPEED = 6;
 const SPAWN_RATE_MIN = 1200;
 const SPAWN_RATE_MAX = 2000;
@@ -189,9 +189,10 @@ export default function RunnerGame() {
 
         const handleTouch = (e: TouchEvent) => {
             // Don't prevent default if touching a button (handled by stopPropagation)
-            // But for general screen tap, we want to jump
-            // e.preventDefault(); // Removed to allow button clicks to work properly
+            // But for general screen tap, we want to jump and PREVENT ghost mousedown
             if ((e.target as HTMLElement).closest('button')) return;
+
+            e.preventDefault(); // Prevent ghost mousedown/click
 
             if (gameState === 'START' || gameState === 'WON' || gameState === 'LOST') startGame();
             else jump();
