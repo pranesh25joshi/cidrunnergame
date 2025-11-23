@@ -36,6 +36,7 @@ export default function RunnerGame() {
     const [gameState, setGameState] = useState<'START' | 'PLAYING' | 'WON' | 'LOST'>('START');
     const [distance, setDistance] = useState(0); // Distance between officers and thief
     const [isLandscape, setIsLandscape] = useState(true);
+    const [isMuted, setIsMuted] = useState(false);
 
     // Entities Refs
     // Player controls Officers (Left side)
@@ -89,16 +90,6 @@ export default function RunnerGame() {
         bgMusic.current = audio;
     }, []);
 
-    // ... (Resize handler remains same) ...
-
-    // ... (Game Logic remains same) ...
-
-    // ... (Input Listeners remain same) ...
-
-    // ... (Game Loop update function) ...
-
-
-
     // Resize & Orientation Handler
     useEffect(() => {
         const handleResize = () => {
@@ -122,6 +113,19 @@ export default function RunnerGame() {
         handleResize();
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // Toggle Mute
+    const toggleMute = (e: React.MouseEvent | React.TouchEvent) => {
+        e.stopPropagation(); // Prevent jump
+        if (bgMusic.current) {
+            bgMusic.current.muted = !bgMusic.current.muted;
+            setIsMuted(bgMusic.current.muted);
+            // Try to play if it was paused due to autoplay policy
+            if (!bgMusic.current.muted && bgMusic.current.paused && gameState === 'PLAYING') {
+                bgMusic.current.play().catch(err => console.log("Audio resume failed", err));
+            }
+        }
+    };
 
     // Game Logic
     const startGame = () => {
@@ -148,7 +152,17 @@ export default function RunnerGame() {
 
         if (bgMusic.current) {
             bgMusic.current.currentTime = 0;
-            bgMusic.current.play().catch(e => console.log("Audio play failed", e));
+            bgMusic.current.muted = isMuted;
+            const playPromise = bgMusic.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    console.log("Audio play failed (Autoplay policy)", e);
+                    // If failed, we might be muted or need interaction. 
+                    // We can show a "Unmute" button or just keep it muted.
+                    setIsMuted(true);
+                    if (bgMusic.current) bgMusic.current.muted = true;
+                });
+            }
         }
     };
 
@@ -173,7 +187,11 @@ export default function RunnerGame() {
         };
 
         const handleTouch = (e: TouchEvent) => {
-            e.preventDefault();
+            // Don't prevent default if touching a button (handled by stopPropagation)
+            // But for general screen tap, we want to jump
+            // e.preventDefault(); // Removed to allow button clicks to work properly
+            if ((e.target as HTMLElement).closest('button')) return;
+
             if (gameState === 'START' || gameState === 'WON' || gameState === 'LOST') startGame();
             else jump();
         };
@@ -182,7 +200,8 @@ export default function RunnerGame() {
         const container = containerRef.current;
         if (container) {
             container.addEventListener('touchstart', handleTouch, { passive: false });
-            container.addEventListener('mousedown', () => {
+            container.addEventListener('mousedown', (e) => {
+                if ((e.target as HTMLElement).closest('button')) return;
                 if (gameState === 'START' || gameState === 'WON' || gameState === 'LOST') startGame();
                 else jump();
             });
@@ -257,8 +276,6 @@ export default function RunnerGame() {
         }
 
         // Draw Officers
-        // Draw Officers
-        // Draw two officers slightly offset
         if (officer1Img.current) {
             ctx.drawImage(officer1Img.current, officers.current.x, officers.current.y, 40, 60);
         } else {
@@ -379,13 +396,27 @@ export default function RunnerGame() {
             )}
 
             {/* HUD */}
-            <div className="absolute top-6 left-6 right-6 flex justify-center pointer-events-none">
-                <div className="glass-panel px-8 py-3 rounded-full flex items-center gap-4 animate-fade-in">
-                    <span className="text-sm text-blue-200 uppercase font-bold tracking-wider">Distance to Target</span>
-                    <span className={`text-3xl font-black tabular-nums tracking-tight ${distance < 200 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                        {distance}px
+            <div className="absolute top-6 left-6 right-6 flex justify-between items-start pointer-events-none">
+                {/* Distance */}
+                <div className="glass-panel px-6 py-2 rounded-full flex items-center gap-3 animate-fade-in pointer-events-auto">
+                    <span className="text-xs text-blue-200 uppercase font-bold tracking-wider">Target</span>
+                    <span className={`text-2xl font-black tabular-nums tracking-tight ${distance < 200 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                        {distance}m
                     </span>
                 </div>
+
+                {/* Mute Button */}
+                <button
+                    onClick={toggleMute}
+                    onTouchStart={toggleMute}
+                    className="glass-panel p-3 rounded-full text-white hover:bg-white/10 active:scale-95 transition-all pointer-events-auto z-50"
+                >
+                    {isMuted ? (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                    ) : (
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                    )}
+                </button>
             </div>
 
             {/* Start Screen */}
