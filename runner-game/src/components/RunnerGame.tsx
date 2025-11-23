@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 // Game Constants
 const GRAVITY = 0.6;
@@ -27,7 +27,7 @@ interface Jumper extends Entity {
 export default function RunnerGame() {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const requestRef = useRef<number>();
+    const requestRef = useRef<number>(0);
     const lastTimeRef = useRef(0);
     const spawnTimerRef = useRef(0);
     const nextSpawnTimeRef = useRef(1500);
@@ -167,7 +167,7 @@ export default function RunnerGame() {
         const container = containerRef.current;
         if (container) {
             container.addEventListener('touchstart', handleTouch, { passive: false });
-            container.addEventListener('mousedown', (e) => {
+            container.addEventListener('mousedown', () => {
                 if (gameState === 'START' || gameState === 'WON' || gameState === 'LOST') startGame();
                 else jump();
             });
